@@ -1,0 +1,22 @@
+[package]
+name = "ssreader"
+version = "0.1.0"
+description = "Local English reader"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-dialog = "2"
+rusqlite = { version = "0.37", features = ["bundled", "backup"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4"] }
+encoding_rs = "0.8"
+lopdf = "0.45"
+zip = { version = "8", default-features = false, features = ["deflate"] }
+tauri-plugin-global-shortcut = "2"
+tempfile = "3"

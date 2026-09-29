@@ -1,0 +1,25 @@
+{
+  "name": "ssreader",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "test:pdf": "node tests/pdf-fixtures.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "tauri:dev": "node scripts/tauri.mjs dev",
+    "tauri:build": "node scripts/tauri.mjs build",
+    "tauri:build:offline": "node scripts/build-offline.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.8.0",
+    "pdfjs-dist": "^5.4.0",
+    "preact": "^10.26.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.5"
+  }
+}

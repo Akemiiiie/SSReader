@@ -1,0 +1,183 @@
+:root { font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; color: #292722; background: transparent; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 8px 12px; background: #495f54; color: var(--app-font-color, white); }
+.app-shell { position: relative; display: flex; height: 100vh; padding-top: 32px; background: transparent; color: var(--app-font-color, #292722); overflow: hidden; }
+.app-shell::before { content: ''; position: absolute; z-index: 0; inset: 0; pointer-events: none; background: rgba(246, 243, 237, var(--window-opacity, 1)); }
+.app-shell.theme-light { color: var(--app-font-color, #24282b); }
+.app-shell.theme-light::before { background: rgba(250, 250, 250, var(--window-opacity, 1)); }
+.app-shell.theme-dark { color: var(--app-font-color, #ecebe5); }
+.app-shell.theme-dark::before { background: rgba(37, 42, 41, var(--window-opacity, 1)); }
+.theme-dark .state-card, .theme-dark .book-card, .theme-dark .settings-card, .theme-dark .continue-card, .theme-dark .import-card, .theme-dark .reader-toolbar, .theme-dark .reader-subtoolbar, .theme-dark .selection-card { background: #303936; color: var(--app-font-color, #ecebe5); border-color: #4b5752; }
+.theme-dark .sidebar { background: #1c2421; }
+.theme-dark .reading-scroll { background: #29302d; }
+.theme-dark .muted { color: var(--app-font-color, #aebbb2); }
+.app-titlebar { position: absolute; z-index: 8; inset: 0 0 auto; height: 32px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #dce1d9; background: #f4f2ec; font: 600 13px Georgia, serif; user-select: none; }
+.theme-dark .app-titlebar { border-color: #4b5752; }
+.content-area { position: relative; z-index: 1; flex: 1; width: 100%; min-width: 0; overflow: auto; }
+.route-reader .content-area { overflow: hidden; }
+.sidebar { position: absolute; z-index: 5; inset: 32px auto 0 0; width: min(180px, 100vw); min-width: 0; flex: none; background: #e8e6dc; padding: 12px 10px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; overflow-x: hidden; overflow-y: auto; transition: width .24s ease, padding .24s ease; }
+.sidebar nav { display: flex; flex-direction: column; gap: 5px; }
+.sidebar-collapsed .sidebar { width: 0; padding-inline: 0; visibility: hidden; transition: width .24s ease, padding .24s ease, visibility 0s .24s; }
+.sidebar-open-button { position: absolute; top: 3px; left: 5px; width: 26px; height: 26px; padding: 2px; display: grid; place-items: center; border-radius: 6px; }
+.sidebar-open-button img { display: block; width: 22px; height: 22px; }
+.nav-item { padding: 7px 9px; border-radius: 7px; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; background: transparent; color: inherit; white-space: nowrap; }
+.nav-item.active { background: #d5dacf; color: var(--app-font-color, #354b3f); font-weight: 600; }
+.sidebar-footer { margin-top: auto; padding-left: 8px; color: var(--app-font-color, #777970); font-size: 12px; }
+.page { padding: 24px clamp(16px, 3vw, 40px); }
+.page-header { display: flex; justify-content: space-between; align-items: start; gap: 16px; margin-bottom: 20px; }
+.header-actions, .action-row, .book-actions, .reader-toolbar, .reader-subtoolbar, .pager { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.secondary { background: #e3e7df; color: var(--app-font-color, #354b3f); }
+.text-button { background: transparent; color: var(--app-font-color, #496b59); padding: 6px 8px; }
+.danger { color: var(--app-font-color, #a34d42); }
+.inline-notice { padding: 10px 14px; border: 1px solid #d9cba8; background: #fff8e8; border-radius: 8px; margin: 12px 0; }
+.inline-notice.error { border-color: #cf9e94; }
+.import-card, .settings-card, .continue-card { background: #fffdf8; border: 1px solid #e9e5d9; border-radius: 12px; padding: 16px; margin: 12px 0; }
+.import-card { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.import-text-preview { flex: 1 0 100%; }
+.import-text-preview label { display: flex; align-items: center; gap: 10px; }
+.import-text-preview select { border: 1px solid #cbd2c8; background: white; border-radius: 7px; padding: 7px; font: inherit; }
+.import-text-preview p { margin: 8px 0; }
+.import-preview { max-height: 140px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: #f3f1ea; border-radius: 8px; padding: 12px; margin: 10px 0 0; font: 14px/1.6 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+.continue-card { display: flex; justify-content: space-between; align-items: center; }
+.section-title { margin: 20px 0 12px; }
+.section-title span { color: var(--app-font-color, #839283); font-size: 15px; }
+.book-info { min-width: 0; }
+.book-info h3 { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
+.book-actions { margin-top: 12px; gap: 4px; }
+.book-actions button { padding: 7px 9px; font-size: 13px; }
+.page.settings-page { max-width: 900px; padding: 16px clamp(12px, 2vw, 24px); font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; font-size: 14px; }
+.settings-page .page-header { align-items: center; margin-bottom: 10px; }
+.settings-page h1 { font-size: 24px; margin: 2px 0 4px; }
+.settings-page h2 { font-size: 15px; margin-bottom: 8px; }
+.settings-page .settings-card { padding: 12px 14px; margin: 8px 0; border-radius: 10px; }
+.settings-card label { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+.settings-card label input[type=range] { width: 200px; }
+.settings-page .settings-card p { margin: 6px 0; line-height: 1.45; }
+.settings-page .action-row { gap: 8px; }
+.settings-page button { padding: 6px 10px; border-radius: 6px; }
+.settings-card select, .reader-subtoolbar select, .page-input { border: 1px solid #cbd2c8; background: #fff; border-radius: 7px; padding: 7px; font: inherit; }
+.settings-page .settings-card select, .settings-page .shortcut-input { padding: 5px 7px; }
+.app-shell.custom-font-color input:not([type=color]), .app-shell.custom-font-color select { color: var(--app-font-color); }
+.settings-card input[type=checkbox] { width: 17px; height: 17px; }
+.font-color-input { width: 36px; height: 28px; padding: 2px; border: 1px solid #cbd2c8; border-radius: 7px; cursor: pointer; }
+.shortcut-input { width: 160px; border: 1px solid #cbd2c8; background: #fff; border-radius: 7px; padding: 7px; font: inherit; }
+.restore-preview { margin-top: 12px; padding-top: 10px; border-top: 1px solid #ddd; }
+.shortcut-warning { padding: 5px 22px; background: #fff0df; color: var(--app-font-color, #854d24); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.reader-page { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.reader-toolbar { padding: 12px 20px; background: #fffdf8; border-bottom: 1px solid #e9e5d9; flex: none; }
+.reader-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.reader-title strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 300px; }
+.reader-title span { font-size: 12px; color: var(--app-font-color, #7b867e); }
+.toolbar-spacer { flex: 1; }
+.reader-layout { min-height: 0; flex: 1; display: flex; }
+.reader-body { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.reader-subtoolbar { padding: 7px 12px; background: #f0f0e8; flex: none; }
+.reader-subtoolbar button, .reader-toolbar button { padding: 8px 12px; }
+.reading-scroll { min-height: 0; flex: 1; overflow: hidden; overflow-anchor: none; overscroll-behavior: none; background: #fcfaf5; }
+.reading-scroll { scrollbar-width: none; }
+.reading-scroll::-webkit-scrollbar { display: none; }
+.txt-content, .reflow-content { max-width: 780px; padding: 20px 32px 55px; margin: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.txt-content p { margin: 0 0 1em; }
+.txt-reader .txt-content { padding-bottom: 20px; }
+.txt-content.txt-measure { position: fixed; top: 0; left: -10000px; visibility: hidden; pointer-events: none; margin: 0; padding-bottom: 20px; }
+.pager { justify-content: center; padding: 10px 22px; border-top: 1px solid #e5e5db; flex: none; }
+.selection-card { position: fixed; bottom: 25px; right: 25px; z-index: 20; width: min(420px, 90vw); background: #fffdf8; border: 1px solid #d5dacf; box-shadow: 0 14px 42px #0003; border-radius: 12px; padding: 18px; }
+.selection-card > div:first-child { display: flex; justify-content: space-between; }
+.selection-card p { max-height: 150px; overflow: auto; }
+.pdf-scroll { text-align: center; }
+.pdf-page { position: relative; width: fit-content; margin: 24px auto 60px; box-shadow: 0 8px 30px #0003; background: white; }
+
+/* Apply the window opacity to UI surfaces only. Keeping opacity off the shell
+   prevents text, icons, and reading content from inheriting a faded state. */
+.app-shell { --surface-alpha: calc(var(--window-opacity, 1) * 100%); }
+.app-shell .sidebar,
+.app-shell.route-settings .app-titlebar,
+.app-shell.route-settings .content-area { --surface-alpha: 100%; }
+.app-shell.route-settings .content-area { background: #f6f3ed; }
+.app-shell.route-settings.theme-light .content-area { background: #fafafa; }
+.app-shell.route-settings.theme-dark .content-area { background: #252a29; }
+.app-shell button,
+.app-shell .sidebar,
+.app-shell .nav-item.active,
+.app-shell .secondary,
+.app-shell .segmented,
+.app-shell .inline-notice,
+.app-shell .import-card,
+.app-shell .settings-card,
+.app-shell .continue-card,
+.app-shell .state-card,
+.app-shell .book-card,
+.app-shell .reader-toolbar,
+.app-shell .reader-subtoolbar,
+.app-shell .reading-scroll,
+.app-shell .selection-card,
+.app-shell .shortcut-warning,
+.app-shell .import-preview,
+.app-shell input,
+.app-shell select,
+.app-shell .book-cover {
+  background-color: color-mix(in srgb, #fffdf8 var(--surface-alpha), transparent);
+}
+.app-shell button,
+.app-shell .segmented.active {
+  background-color: color-mix(in srgb, #495f54 var(--surface-alpha), transparent);
+}
+.app-shell .sidebar { background-color: color-mix(in srgb, #e8e6dc var(--surface-alpha), transparent); }
+.app-shell .app-titlebar { background-color: color-mix(in srgb, #f4f2ec var(--surface-alpha), transparent); }
+.app-shell .nav-item.active,
+.app-shell .secondary,
+.app-shell .segmented { background-color: color-mix(in srgb, #d5dacf var(--surface-alpha), transparent); }
+.app-shell .reading-scroll { background-color: color-mix(in srgb, #fcfaf5 var(--surface-alpha), transparent); }
+.app-shell .reader-subtoolbar { background-color: color-mix(in srgb, #f0f0e8 var(--surface-alpha), transparent); }
+.app-shell .import-preview { background-color: color-mix(in srgb, #f3f1ea var(--surface-alpha), transparent); }
+.app-shell.theme-dark .state-card,
+.app-shell.theme-dark .book-card,
+.app-shell.theme-dark .settings-card,
+.app-shell.theme-dark .continue-card,
+.app-shell.theme-dark .import-card,
+.app-shell.theme-dark .reader-toolbar,
+.app-shell.theme-dark .reader-subtoolbar,
+.app-shell.theme-dark .selection-card { background-color: color-mix(in srgb, #303936 var(--surface-alpha), transparent); }
+.app-shell.theme-dark .sidebar { background-color: color-mix(in srgb, #1c2421 var(--surface-alpha), transparent); }
+.app-shell.theme-dark .app-titlebar { background-color: color-mix(in srgb, #1c2421 var(--surface-alpha), transparent); }
+.app-shell.theme-dark .reading-scroll { background-color: color-mix(in srgb, #29302d var(--surface-alpha), transparent); }
+.pdf-page .textLayer { position: absolute; inset: 0; text-align: initial; }
+.page-input { width: 62px; text-align: center; }
+.segmented { background: #e3e7df; color: var(--app-font-color, #354b3f); }
+.segmented.active { background: #495f54; color: var(--app-font-color, white); }
+.loading-overlay { text-align: center; }
+.page-boundary { margin: 30px 0; text-align: center; color: var(--app-font-color, #818980); border-top: 1px solid #d7dcd3; padding: 12px; }
+h1 { font: 500 30px Georgia, 'Microsoft YaHei', serif; margin: 5px 0 8px; }
+h2 { font-size: 17px; margin: 0 0 10px; }
+p { line-height: 1.6; }
+.eyebrow { color: var(--app-font-color, #7a8b77); font-size: 11px; font-weight: 700; letter-spacing: .2em; margin: 0; }
+.muted { color: var(--app-font-color, #777970); }
+.state-card { background: #fffdf8; border: 1px solid #e9e5d9; border-radius: 16px; padding: 36px; max-width: 640px; }
+.state-card.error { border-color: #dfb8aa; }
+.warning { color: var(--app-font-color, #a04f39); }
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.book-card { display: flex; gap: 12px; background: #fffdf8; border: 1px solid #e9e5d9; border-radius: 12px; padding: 14px; }
+.book-cover { width: 72px; height: 98px; flex: none; background: #bec9b9; display: grid; place-items: center; font: 700 12px Georgia, serif; color: var(--app-font-color, #34463c); }
+@media (max-width: 1100px) {
+  .sidebar { width: min(160px, 100vw); }
+  .txt-content, .reflow-content { padding-inline: clamp(18px, 3vw, 32px); }
+}
+@media (max-width: 900px) {
+  .sidebar { width: min(145px, 100vw); }
+  .page-header { flex-direction: column; align-items: stretch; }
+  .settings-page .page-header { align-items: stretch; }
+  .settings-card label, .import-text-preview label { flex-wrap: wrap; }
+  .settings-card label input[type=range] { flex: 1; min-width: 130px; width: auto; }
+  .settings-card select, .shortcut-input { max-width: 100%; }
+  .continue-card { flex-direction: column; align-items: flex-start; }
+  .reader-subtoolbar { gap: 6px; padding: 8px 12px; }
+  .reader-subtoolbar button { padding: 6px 8px; }
+}
+@media (max-width: 760px) {
+  .page { padding: 16px 12px; }
+  .settings-card, .import-card { padding: 12px; }
+  .txt-content, .reflow-content { padding: 14px 14px 40px; }
+  .book-grid { grid-template-columns: minmax(0, 1fr); }
+  .selection-card { right: 12px; bottom: 12px; }
+}
