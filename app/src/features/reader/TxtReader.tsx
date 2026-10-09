@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { api, asAppError } from '../../shared/api/reader';
 import type { Anchor, BookSummary, ReadingSettings, SelectionSnapshot, TxtChunk } from '../../shared/contracts/book';
 import { codePointOffsetAtY, codePointOffsetStartingAtY } from './pagePosition';
+import { sentenceContext } from './selectionContext';
 
 type Cursor = { paragraphIndex: number; codePointOffset: number };
 type Page = { start: Cursor; end: Cursor | null; paragraphs: TxtChunk[] };
@@ -76,7 +77,7 @@ function pageBreak(paragraphs: TxtChunk[], elements: HTMLElement[], bottom: numb
   return null;
 }
 
-export function TxtReader({ book, settings, jump, onAnchor, onSelection, previousShortcut, nextShortcut }: { book: BookSummary; settings: ReadingSettings; jump: Anchor | null; onAnchor: (anchor: Anchor) => void; onSelection: (snapshot: SelectionSnapshot) => void; previousShortcut: string; nextShortcut: string }) {
+export function TxtReader({ book, settings, compact = false, jump, onAnchor, onSelection, previousShortcut, nextShortcut }: { compact?: boolean; book: BookSummary; settings: ReadingSettings; jump: Anchor | null; onAnchor: (anchor: Anchor) => void; onSelection: (snapshot: SelectionSnapshot) => void; previousShortcut: string; nextShortcut: string }) {
   const initial = book.position?.kind === 'txt' ? book.position : null;
   const [start, setStart] = useState<Cursor>({ paragraphIndex: initial?.paragraphIndex ?? 0, codePointOffset: initial?.codePointOffset ?? 0 });
   const [page, setPage] = useState<Page | null>(null);
@@ -118,7 +119,7 @@ export function TxtReader({ book, settings, jump, onAnchor, onSelection, previou
     setStart({ paragraphIndex: jump.paragraphIndex, codePointOffset: jump.codePointOffset });
   }, [jump]);
 
-  useEffect(() => { history.current = []; }, [settings.fontSize, settings.lineHeight, layoutVersion]);
+  useEffect(() => { history.current = []; }, [settings.fontSize, settings.fontFamily, settings.lineHeight, compact, layoutVersion]);
 
   useEffect(() => {
     const container = viewport.current;
@@ -126,9 +127,11 @@ export function TxtReader({ book, settings, jump, onAnchor, onSelection, previou
     if (!container || !element) return;
     let active = true;
     turning.current = true;
+    element.classList.toggle('floating-text', compact);
     element.style.width = `${Math.min(780, container.clientWidth)}px`;
     element.style.fontSize = `${settings.fontSize}px`;
     element.style.lineHeight = String(settings.lineHeight);
+    element.style.fontFamily = settings.fontFamily === 'book' ? 'Georgia, "Times New Roman", "Microsoft YaHei", serif' : settings.fontFamily === 'mono' ? 'Consolas, "Microsoft YaHei", monospace' : '"Segoe UI", "Microsoft YaHei", sans-serif';
     const bottom = element.getBoundingClientRect().top + container.clientHeight - (parseFloat(getComputedStyle(element).paddingBottom) || 0);
 
     async function loadPage() {
@@ -179,7 +182,7 @@ export function TxtReader({ book, settings, jump, onAnchor, onSelection, previou
     }
     void loadPage();
     return () => { active = false; };
-  }, [book.id, start.paragraphIndex, start.codePointOffset, settings.fontSize, settings.lineHeight, layoutVersion]);
+  }, [book.id, start.paragraphIndex, start.codePointOffset, settings.fontSize, settings.fontFamily, settings.lineHeight, compact, layoutVersion]);
 
   async function findPrevious(current: Cursor): Promise<Cursor | null> {
     const container = viewport.current;
@@ -260,14 +263,14 @@ export function TxtReader({ book, settings, jump, onAnchor, onSelection, previou
     before.selectNodeContents(element);
     before.setEnd(range.startContainer, range.startOffset);
     const codePointOffset = paragraph.codePointOffset + pointLength(before.toString());
-    onSelection({ bookId: book.id, format: 'txt', text, sourceLabel: `第 ${paragraph.paragraphIndex + 1} 段`, anchor: { kind: 'txt', version: 1, paragraphIndex: paragraph.paragraphIndex, codePointOffset, paragraphFingerprint: paragraph.fingerprint } });
+    onSelection({ bookId: book.id, format: 'txt', text, sourceLabel: `第 ${paragraph.paragraphIndex + 1} 段`, ...sentenceContext(paragraph.text, before.toString().length), anchor: { kind: 'txt', version: 1, paragraphIndex: paragraph.paragraphIndex, codePointOffset, paragraphFingerprint: paragraph.fingerprint } });
   }
 
   return <div class="reader-body txt-reader">
     {error && <p class="inline-notice" role="alert">{error}</p>}
     <div class="reading-scroll txt-viewport" ref={viewport} onMouseUp={selected}>
       {!page && !error && <p class="state-card">正在排版正文…</p>}
-      {page && <article class="txt-content" style={{ fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight }}>
+      {page && <article class={`txt-content ${compact ? 'floating-text' : ''}`} style={{ fontSize: `${settings.fontSize}px`, lineHeight: settings.lineHeight }}>
         {page.paragraphs.map(paragraph => <p key={`${paragraph.paragraphIndex}-${paragraph.codePointOffset}`} data-paragraph={paragraph.paragraphIndex} data-offset={paragraph.codePointOffset}>{paragraph.text || '\u00a0'}</p>)}
       </article>}
     </div>

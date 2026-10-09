@@ -32,6 +32,9 @@ fn show(app: &AppHandle) {
 
 #[cfg(target_os = "windows")]
 fn hide(app: &AppHandle) {
+    if let Some(popup) = app.get_webview_window("analysis-popup") {
+        let _ = popup.close();
+    }
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.hide();
     }
@@ -41,7 +44,7 @@ fn hide(app: &AppHandle) {
 fn toggle(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         if window.is_visible().unwrap_or(false) {
-            let _ = window.hide();
+            hide(app);
         } else {
             show(app);
         }

@@ -50,6 +50,9 @@ pub fn setup(app: &mut App) -> tauri::Result<()> {
         window.on_window_event(move |event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
                 api.prevent_close();
+                if let Some(popup) = close_window.app_handle().get_webview_window("analysis-popup") {
+                    let _ = popup.close();
+                }
                 let _ = close_window.hide();
             }
         });

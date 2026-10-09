@@ -7,6 +7,10 @@ export function asAppError(error: unknown): AppError {
 }
 
 export const api = {
+  getAiConfig: () => invoke<{ configured: boolean }>('get_ai_config'),
+  setAiApiKey: (apiKey: string) => invoke<{ configured: boolean }>('set_ai_api_key', { apiKey }),
+  clearAiApiKey: () => invoke<{ configured: boolean }>('clear_ai_api_key'),
+  testAiConnection: () => invoke<void>('test_ai_connection'),
   listBooks: () => invoke<BookSummary[]>('list_books'),
   getBook: (bookId: string) => invoke<BookSummary>('get_book', { bookId }),
   selectImportFile: () => invoke<ImportSelection | null>('select_import_file'),

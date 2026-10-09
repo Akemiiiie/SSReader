@@ -34,6 +34,7 @@ export interface Bookmark { id: string; anchor: Anchor; label: string | null; cr
 
 export interface ReadingSettings {
   fontSize: number;
+  fontFamily?: 'book' | 'system' | 'mono';
   fontColor: string | null;
   lineHeight: number;
   theme: 'paper' | 'light' | 'dark';
@@ -50,7 +51,7 @@ export interface PdfBlock { id: string; text: string; x: number; y: number; widt
 export interface PdfPageText { pageNo: number; quality: 'good' | 'uncertain' | 'no-text'; blocks: PdfBlock[]; extractorVersion: string }
 export interface BackupInfo { bookCount: number; byteSize: number; schemaVersion: number }
 
-export interface SelectionSnapshot { bookId: string; format: 'txt' | 'pdf'; text: string; anchor: Anchor; sourceLabel: string }
+export interface SelectionSnapshot { bookId: string; format: 'txt' | 'pdf'; text: string; anchor: Anchor; sourceLabel: string; sourceSentence?: string; contextBefore?: string; contextAfter?: string }
 
 export interface AppError {
   code: string;

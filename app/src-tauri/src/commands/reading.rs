@@ -1,6 +1,6 @@
 use super::{blocking, internal};
 use crate::{domain::AppError, services::reading, storage::AppState};
-use tauri::{ipc::Response, AppHandle, State, Window};
+use tauri::{ipc::Response, AppHandle, Emitter, Manager, State, Window};
 
 #[tauri::command]
 pub fn get_txt_slice(
@@ -139,7 +139,10 @@ pub fn set_reading_settings(
         .set_always_on_top(settings.always_on_top)
         .map_err(internal)?;
     let _guard = state.operation.lock().map_err(internal)?;
-    reading::set_settings(state.database()?, settings)
+    let saved = reading::set_settings(state.database()?, settings)?;
+    // Notify the independent webview after persistence; a closed popup is fine.
+    let _ = window.app_handle().emit_to("analysis-popup", "reading-settings-changed", &saved);
+    Ok(saved)
 }
 
 #[tauri::command]
@@ -165,6 +168,9 @@ pub fn get_shortcut_status(state: State<'_, AppState>) -> Result<Option<String>,
 #[tauri::command]
 pub fn toggle_main_window(window: Window) -> Result<(), AppError> {
     if window.is_visible().map_err(internal)? {
+        if let Some(popup) = window.app_handle().get_webview_window("analysis-popup") {
+            popup.close().map_err(internal)?;
+        }
         window.hide().map_err(internal)
     } else {
         window.show().map_err(internal)?;

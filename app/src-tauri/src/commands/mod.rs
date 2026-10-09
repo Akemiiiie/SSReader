@@ -1,7 +1,9 @@
+mod analysis;
 mod backup;
 mod books;
 mod reading;
 
+pub use analysis::*;
 pub use backup::*;
 pub use books::*;
 pub use reading::*;

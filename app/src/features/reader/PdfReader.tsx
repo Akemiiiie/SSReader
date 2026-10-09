@@ -4,6 +4,7 @@ import { api, asAppError } from '../../shared/api/reader';
 import type { Anchor, BookSummary, PdfBlock, PdfPageText, ReadingSettings, SelectionSnapshot } from '../../shared/contracts/book';
 import { openPdfBytes } from './pdf/pdfDocument';
 import { alignCodePoint, codePointOffsetAtY, turnWithinViewport } from './pagePosition';
+import { sentenceContext } from './selectionContext';
 import 'pdfjs-dist/web/pdf_viewer.css';
 
 const extractorVersion = `pdfjs-${version}`;
@@ -229,7 +230,15 @@ export function PdfReader({ book, settings, jump, onAnchor, onSelection, onZoom,
     if (!text) return;
     const node = selection?.anchorNode instanceof Element ? selection.anchorNode : selection?.anchorNode?.parentElement;
     const blockId = node?.closest<HTMLElement>('[data-block]')?.dataset.block;
-    onSelection({ bookId: book.id, format: 'pdf', text, sourceLabel: `第 ${pageNo} 页`, anchor: { kind: 'pdf', version: 1, pageNo, mode: artifact?.quality === 'no-text' ? 'original' : mode, blockId } });
+    const block = node?.closest<HTMLElement>('[data-block]');
+    let context = sentenceContext(text, 0);
+    if (block && selection?.rangeCount && block.contains(selection.getRangeAt(0).startContainer)) {
+      const prefix = window.document.createRange();
+      prefix.selectNodeContents(block);
+      prefix.setEnd(selection.getRangeAt(0).startContainer, selection.getRangeAt(0).startOffset);
+      context = sentenceContext(block.textContent ?? text, prefix.toString().length);
+    }
+    onSelection({ bookId: book.id, format: 'pdf', text, sourceLabel: `第 ${pageNo} 页`, ...context, anchor: { kind: 'pdf', version: 1, pageNo, mode: artifact?.quality === 'no-text' ? 'original' : mode, blockId } });
   }
 
   const effectiveMode = artifact?.quality === 'no-text' ? 'original' : mode;

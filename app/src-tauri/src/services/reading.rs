@@ -221,7 +221,7 @@ pub fn set_txt_encoding(db: &Database, book_id: &str, encoding: &str) -> Result<
     Ok(())
 }
 
-fn validate_anchor(anchor: &Value) -> Result<(), AppError> {
+pub(crate) fn validate_anchor(anchor: &Value) -> Result<(), AppError> {
     if anchor.get("version").and_then(Value::as_u64) != Some(1) {
         return Err(AppError::new("ANCHOR_STALE", "不支持的阅读位置版本", false));
     }
@@ -363,6 +363,7 @@ pub fn delete_bookmark(db: &Database, id: &str) -> Result<(), AppError> {
 #[serde(default)]
 pub struct ReadingSettings {
     pub font_size: u16,
+    pub font_family: String,
     pub font_color: Option<String>,
     pub line_height: f32,
     pub theme: String,
@@ -392,6 +393,7 @@ impl Default for ReadingSettings {
     fn default() -> Self {
         Self {
             font_size: 19,
+            font_family: "system".into(),
             font_color: None,
             line_height: 1.8,
             theme: "paper".into(),
@@ -425,6 +427,7 @@ pub fn get_settings(db: &Database) -> Result<ReadingSettings, AppError> {
 
 pub fn set_settings(db: &Database, settings: ReadingSettings) -> Result<ReadingSettings, AppError> {
     if !(12..=36).contains(&settings.font_size)
+        || !matches!(settings.font_family.as_str(), "book" | "system" | "mono")
         || settings.font_color.as_deref().is_some_and(|color| {
             color.len() != 7
                 || !color.starts_with('#')
@@ -546,4 +549,28 @@ pub fn pdf_bytes(db: &Database, book_id: &str) -> Result<Vec<u8>, AppError> {
         ));
     }
     fs::read(path).map_err(|error| AppError::storage(error.to_string()))
+}
+
+#[cfg(test)]
+mod settings_compatibility_tests {
+    use super::ReadingSettings;
+
+    #[test]
+    fn older_settings_keep_values_and_default_to_system_font() {
+        let settings: ReadingSettings = serde_json::from_str(
+            r##"{"fontSize":24,"opacity":0.0,"fontColor":"#456b92","theme":"dark"}"##,
+        ).unwrap();
+        assert_eq!(settings.font_family, "system");
+        assert_eq!(settings.font_size, 24);
+        assert_eq!(settings.opacity, 0.0);
+        assert_eq!(settings.font_color.as_deref(), Some("#456b92"));
+        assert_eq!(settings.theme, "dark");
+    }
+
+    #[test]
+    fn selected_font_survives_settings_serialization() {
+        let settings = ReadingSettings { font_family: "mono".into(), ..Default::default() };
+        let restored: ReadingSettings = serde_json::from_str(&serde_json::to_string(&settings).unwrap()).unwrap();
+        assert_eq!(restored.font_family, "mono");
+    }
 }

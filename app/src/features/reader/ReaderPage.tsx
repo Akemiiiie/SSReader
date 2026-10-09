@@ -3,11 +3,12 @@ import { api, asAppError } from '../../shared/api/reader';
 import type { Anchor, BookSummary, ReadingSettings, SelectionSnapshot } from '../../shared/contracts/book';
 import { TxtReader } from './TxtReader';
 import { PdfReader } from './PdfReader';
+import { AnalysisPopupController } from './AnalysisPopupController';
 
-export function ReaderPage({ book, settings, onSettingsChange, onPositionChange }: { book: BookSummary; settings: ReadingSettings; onSettingsChange: (value: ReadingSettings) => void; onPositionChange: (value: Anchor) => void }) {
+export function ReaderPage({ book, settings, compact = false, onSettingsChange, onPositionChange }: { compact?: boolean; book: BookSummary; settings: ReadingSettings; onSettingsChange: (value: ReadingSettings) => void; onPositionChange: (value: Anchor) => void }) {
   const latest = useRef<Anchor | null>(book.position);
   const pendingSave = useRef<Promise<void>>(Promise.resolve());
-  const [selection, setSelection] = useState<SelectionSnapshot | null>(null);
+  const popup = useRef(new AnalysisPopupController());
   const [saveError, setSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -33,14 +34,24 @@ export function ReaderPage({ book, settings, onSettingsChange, onPositionChange 
     return () => { onBlur(); window.removeEventListener('blur', onBlur); document.removeEventListener('visibilitychange', onVisibility); };
   }, [book.id]);
 
+  useEffect(() => {
+    const dismiss = () => { void popup.current.dismiss(); };
+    document.addEventListener('pointerdown', dismiss);
+    return () => { document.removeEventListener('pointerdown', dismiss); void popup.current.dispose(); };
+  }, []);
+
+  function selected(snapshot: SelectionSnapshot) {
+    void popup.current.open({ selection: snapshot, theme: settings.theme, fontColor: settings.fontColor, opacity: settings.opacity })
+      .catch(error => setNotice(asAppError(error).message));
+  }
+
   return <main class="reader-page">
     {saveError && <p class="inline-notice error" role="alert">阅读位置未保存：{saveError} <button class="text-button" onClick={() => { void flush(); }}>重试</button></p>}
     {notice && <p class="inline-notice" role="status">{notice} <button class="text-button" onClick={() => setNotice(null)}>关闭</button></p>}
     <div class="reader-layout">
       {book.format === 'txt'
-        ? <TxtReader book={book} settings={settings} jump={null} onAnchor={current} onSelection={setSelection} previousShortcut={settings.previousPageShortcut} nextShortcut={settings.nextPageShortcut} />
-        : <PdfReader book={book} settings={settings} jump={null} onAnchor={current} onSelection={setSelection} onZoom={pdfZoom => onSettingsChange({ ...settings, pdfZoom })} previousShortcut={settings.previousPageShortcut} nextShortcut={settings.nextPageShortcut} />}
+        ? <TxtReader compact={compact} book={book} settings={settings} jump={null} onAnchor={current} onSelection={selected} previousShortcut={settings.previousPageShortcut} nextShortcut={settings.nextPageShortcut} />
+        : <PdfReader book={book} settings={settings} jump={null} onAnchor={current} onSelection={selected} onZoom={pdfZoom => onSettingsChange({ ...settings, pdfZoom })} previousShortcut={settings.previousPageShortcut} nextShortcut={settings.nextPageShortcut} />}
     </div>
-    {selection && <div class="selection-card" role="dialog" aria-label="原文选区"><div><strong>原文选区</strong><span>{selection.sourceLabel}</span></div><p>{selection.text}</p><div class="action-row"><button onClick={() => { navigator.clipboard.writeText(selection.text).catch(error => setNotice(String(error))); setSelection(null); }}>复制原文</button><button class="secondary" onClick={() => setSelection(null)}>关闭</button></div></div>}
   </main>;
 }

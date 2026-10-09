@@ -295,7 +295,7 @@ pub fn restore_backup(data_dir: &Path, source: &Path) -> Result<BackupInfo, AppE
     if version != manifest.schema_version || integrity != "ok" {
         return Err(failure("备份数据库校验失败"));
     }
-    if version != SCHEMA_VERSION {
+    if version < 1 || version > SCHEMA_VERSION {
         return Err(AppError::new(
             "BACKUP_INCOMPATIBLE",
             "备份数据库版本与当前应用不兼容",
@@ -303,6 +303,9 @@ pub fn restore_backup(data_dir: &Path, source: &Path) -> Result<BackupInfo, AppE
         ));
     }
     drop(connection);
+    if version < SCHEMA_VERSION {
+        Database::initialize(stage.path().to_path_buf())?;
+    }
 
     let marker = data_dir.join("restore-in-progress");
     let rollback = data_dir.join("restore-rollback");

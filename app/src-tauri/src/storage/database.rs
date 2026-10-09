@@ -2,7 +2,7 @@ use crate::domain::{AppError, BookSummary};
 use rusqlite::{Connection, OpenFlags};
 use std::{collections::HashSet, fs, path::PathBuf};
 
-pub const SCHEMA_VERSION: i64 = 2;
+pub const SCHEMA_VERSION: i64 = 4;
 
 pub struct Database {
     pub(crate) data_dir: PathBuf,
@@ -51,10 +51,50 @@ impl Database {
                 .execute_batch(include_str!("../../migrations/0002_reader.sql"))
                 .map_err(|error| AppError::migration(error.to_string()))?;
             transaction
-                .pragma_update(None, "user_version", SCHEMA_VERSION)
+                .pragma_update(None, "user_version", 2)
                 .map_err(|error| AppError::migration(error.to_string()))?;
             transaction
                 .commit()
+                .map_err(|error| AppError::migration(error.to_string()))?;
+        }
+        if current < 3 {
+            let transaction = connection
+                .transaction()
+                .map_err(|error| AppError::migration(error.to_string()))?;
+            transaction
+                .execute_batch(include_str!("../../migrations/0003_analysis.sql"))
+                .map_err(|error| AppError::migration(error.to_string()))?;
+            transaction
+                .pragma_update(None, "user_version", 3)
+                .map_err(|error| AppError::migration(error.to_string()))?;
+            transaction
+                .commit()
+                .map_err(|error| AppError::migration(error.to_string()))?;
+        }
+        if current < 4 {
+            let transaction = connection.transaction()
+                .map_err(|error| AppError::migration(error.to_string()))?;
+            let columns: Vec<String> = {
+                let mut statement = transaction.prepare("PRAGMA table_info(analysis_cache)")
+                    .map_err(|error| AppError::migration(error.to_string()))?;
+                let rows = statement.query_map([], |row| row.get(1))
+                    .map_err(|error| AppError::migration(error.to_string()))?;
+                rows.collect::<Result<_, _>>()
+                    .map_err(|error| AppError::migration(error.to_string()))?
+            };
+            if !columns.iter().any(|column| column == "book_id") {
+                // Early v3 caches had no book ownership. Their rows cannot be
+                // safely assigned to a book; preserve them separately, never reuse them.
+                if !columns.is_empty() {
+                    transaction.execute_batch("ALTER TABLE analysis_cache RENAME TO analysis_cache_legacy_v3;")
+                        .map_err(|error| AppError::migration(error.to_string()))?;
+                }
+                transaction.execute_batch(include_str!("../../migrations/0003_analysis.sql"))
+                    .map_err(|error| AppError::migration(error.to_string()))?;
+            }
+            transaction.pragma_update(None, "user_version", SCHEMA_VERSION)
+                .map_err(|error| AppError::migration(error.to_string()))?;
+            transaction.commit()
                 .map_err(|error| AppError::migration(error.to_string()))?;
         }
         fs::create_dir_all(data_dir.join("books"))
@@ -218,6 +258,32 @@ mod tests {
             .query_row("SELECT count(*) FROM book_preferences", [], |row| {
                 row.get(0)
             })
+            .unwrap();
+        assert_eq!(count, 0);
+    }
+
+    #[test]
+    fn migrates_existing_version_two_database() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join("reader.sqlite3");
+        let connection = Connection::open(&path).unwrap();
+        connection
+            .execute_batch(include_str!("../../migrations/0001_initial.sql"))
+            .unwrap();
+        connection
+            .execute_batch(include_str!("../../migrations/0002_reader.sql"))
+            .unwrap();
+        connection.pragma_update(None, "user_version", 2).unwrap();
+        drop(connection);
+
+        Database::initialize(root.path().to_path_buf()).unwrap();
+        let connection = Connection::open(path).unwrap();
+        let version: i64 = connection
+            .query_row("PRAGMA user_version", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(version, SCHEMA_VERSION);
+        let count: i64 = connection
+            .query_row("SELECT count(*) FROM analysis_cache", [], |row| row.get(0))
             .unwrap();
         assert_eq!(count, 0);
     }
